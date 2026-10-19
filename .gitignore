@@ -37,3 +37,7 @@ build/
 *.keystore
 *.jks
 /signing.properties
+/release.p12
+/*.p12
+/*.jks
+/keystore.properties

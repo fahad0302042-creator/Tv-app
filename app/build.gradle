@@ -39,6 +39,32 @@ android {
 		}
 		resValue 'string', 'tg_backup_bot_token', localProperties.getProperty('tg_backup_bot_token', '')
 	}
+	// Release signing (TV fork).
+	// CI provides TV_KEYSTORE_FILE / TV_KEYSTORE_PASSWORD / TV_KEY_ALIAS from repository
+	// secrets; local builds read keystore.properties (gitignored) from the project root.
+	// Without either, release builds are produced unsigned instead of failing.
+	def signingProps = new Properties()
+	def signingPropsFile = rootProject.file('keystore.properties')
+	if (signingPropsFile.exists()) {
+		signingProps.load(new FileInputStream(signingPropsFile))
+	}
+	def envKeystoreFile = System.getenv('TV_KEYSTORE_FILE')
+	def keystoreFile = envKeystoreFile ?: signingProps.getProperty('storeFile')
+	def keystorePassword = System.getenv('TV_KEYSTORE_PASSWORD') ?: signingProps.getProperty('storePassword')
+	def keystoreAlias = System.getenv('TV_KEY_ALIAS') ?: signingProps.getProperty('keyAlias')
+	def hasReleaseKeystore = keystoreFile != null && keystorePassword != null && keystoreAlias != null
+	if (!hasReleaseKeystore) {
+		println('WARNING: no release keystore configured (secrets/keystore.properties); release APKs will be unsigned')
+	}
+	signingConfigs {
+		release {
+			storeFile keystoreFile == null ? null : (envKeystoreFile != null ? file(keystoreFile) : rootProject.file(keystoreFile))
+			storePassword keystorePassword
+			keyAlias keystoreAlias
+			keyPassword System.getenv('TV_KEYSTORE_PASSWORD') ?: signingProps.getProperty('keyPassword', keystorePassword)
+			storeType signingProps.getProperty('storeType', 'PKCS12')
+		}
+	}
 	buildTypes {
 		debug {
 			applicationIdSuffix = '.debug'
@@ -47,6 +73,7 @@ android {
 			minifyEnabled true
 			shrinkResources true
 			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+			signingConfig hasReleaseKeystore ? signingConfigs.release : null
 		}
 		nightly {
 			initWith release
