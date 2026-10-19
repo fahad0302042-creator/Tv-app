@@ -66,6 +66,6 @@ object TvPointer {
 		if (event.actionMasked != MotionEvent.ACTION_SCROLL) {
 			return 0f
 		}
-		return event.getAxisValue(MotionEvent.AXIS_V_SCROLL)
+		return event.getAxisValue(MotionEvent.AXIS_VSCROLL)
 	}
 }

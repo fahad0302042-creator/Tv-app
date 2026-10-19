@@ -13,17 +13,19 @@ import org.koitharu.kotatsu.R
  */
 object TvFocus {
 
+	private const val SKIP_TAG = "tv_skip_subtree"
+
 	/**
 	 * Marks [view] (and therefore its whole subtree) as excluded from the TV list adaptation.
 	 * Used by the reader, where D-pad keys must page/scroll instead of moving the focus
 	 * between page views.
 	 */
 	fun skipSubtree(view: View) {
-		view.setTag(R.id.tag_tv_adapted, Boolean.FALSE)
+		view.setTag(R.id.tag_tv_adapted, SKIP_TAG)
 	}
 
 	fun isSubtreeSkipped(view: View): Boolean =
-		view.getTag(R.id.tag_tv_adapted) == Boolean.FALSE
+		view.getTag(R.id.tag_tv_adapted) == SKIP_TAG
 
 	/**
 	 * @return `true` when [recyclerView] should get the TV focus treatment.

@@ -35,7 +35,7 @@ class ScrollTimer @AssistedInject constructor(
 	@Assisted resources: Resources,
 	@Assisted private val listener: ReaderControlDelegate.OnInteractionListener,
 	@Assisted lifecycleOwner: LifecycleOwner,
-	settings: AppSettings,
+	private val settings: AppSettings,
 ) {
 
 	private val coroutineScope = lifecycleOwner.lifecycleScope
