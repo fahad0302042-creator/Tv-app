@@ -569,21 +569,20 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		if (event != null && event.action == KeyEvent.ACTION_DOWN) {
 			val isLongPress = event.eventTime - event.downTime > 500
 			when (event.keyCode) {
-				KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
-					if (isLongPress) {
-						tvMousePointer.toggle()
-						return true
-					}
+			KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
+				if (isLongPress) {
+					tvMousePointer.toggle()
+					return true
 				}
+			}
 				KeyEvent.KEYCODE_PLAY, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
 					toggleAutoScroll()
 					return true
 				}
 			}
 			if (tvMousePointer.isEnabled) {
-				if (tvMousePointer.handleKey(event.keyCode)) {
-					return true
-				}
+				// Pointer mode enabled; consume key events for overlay
+				return true
 			}
 		}
 		return super.dispatchKeyEvent(event)
