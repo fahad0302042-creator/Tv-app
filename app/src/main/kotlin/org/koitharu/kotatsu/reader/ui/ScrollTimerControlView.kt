@@ -21,6 +21,7 @@ import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.prefs.ReaderMode
 import org.koitharu.kotatsu.core.prefs.observeAsStateFlow
+import org.koitharu.kotatsu.core.ui.tv.TvController
 import org.koitharu.kotatsu.core.util.ext.isAnimationsEnabled
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.parentView
@@ -38,6 +39,9 @@ class ScrollTimerControlView @JvmOverloads constructor(
 
 	@Inject
 	lateinit var settings: AppSettings
+
+	@Inject
+	lateinit var tvController: TvController
 
 	var onVisibilityChangeListener: OnVisibilityChangeListener? = null
 
@@ -128,16 +132,45 @@ class ScrollTimerControlView @JvmOverloads constructor(
 	fun show() {
 		setupVisibilityTransition()
 		isVisible = true
+		requestFocusForTv()
 	}
 
 	fun hide() {
 		setupVisibilityTransition()
 		isVisible = false
+		releaseFocusForTv()
 	}
 
 	fun showOrHide() {
 		setupVisibilityTransition()
-		isVisible = !isVisible
+		val becomingVisible = !isVisible
+		isVisible = becomingVisible
+		if (becomingVisible) {
+			requestFocusForTv()
+		} else {
+			releaseFocusForTv()
+		}
+	}
+
+	/**
+	 * On a TV the panel is operated with the D-pad, so it grabs the focus when shown and
+	 * gives it back when hidden.
+	 */
+	private fun requestFocusForTv() {
+		if (!tvController.isEnabled) {
+			return
+		}
+		post {
+			if (rootView.findFocus() == null || hasFocus()) {
+				binding.switchScrollTimer.requestFocus()
+			}
+		}
+	}
+
+	private fun releaseFocusForTv() {
+		if (hasFocus()) {
+			binding.switchScrollTimer.clearFocus()
+		}
 	}
 
 	private fun setupVisibilityTransition() {

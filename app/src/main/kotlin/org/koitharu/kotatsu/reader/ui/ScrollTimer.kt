@@ -29,6 +29,7 @@ private const val MAX_DELAY = 32L
 private const val MAX_SWITCH_DELAY = 10_000L
 private const val INTERACTION_SKIP_MS = 2_000L
 private const val SPEED_FACTOR_DELTA = 0.02f
+private const val DEFAULT_TV_SPEED = 0.3f
 
 class ScrollTimer @AssistedInject constructor(
 	@Assisted resources: Resources,
@@ -64,6 +65,32 @@ class ScrollTimer @AssistedInject constructor(
 			isRunning.value = value
 			restartJob()
 		}
+	}
+
+	/**
+	 * Toggles the auto-scroll. When starting with a zero (never configured) speed, a sane
+	 * default is applied so that a single PLAY press on a remote actually scrolls.
+	 *
+	 * @return the new active state
+	 */
+	fun toggleActive(): Boolean {
+		val newValue = !isRunning.value
+		if (newValue && settings.readerAutoscrollSpeed <= 0f) {
+			settings.readerAutoscrollSpeed = DEFAULT_TV_SPEED
+		}
+		setActive(newValue)
+		return newValue
+	}
+
+	/**
+	 * Changes the auto-scroll speed by [delta] (in the `0f..1f` range) and persists it.
+	 *
+	 * @return the new speed value
+	 */
+	fun adjustSpeed(delta: Float): Float {
+		val newValue = (settings.readerAutoscrollSpeed + delta).coerceIn(0f, 1f)
+		settings.readerAutoscrollSpeed = newValue
+		return newValue
 	}
 
 	fun onUserInteraction() {

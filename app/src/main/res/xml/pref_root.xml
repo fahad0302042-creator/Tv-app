@@ -21,6 +21,13 @@
         android:title="@string/reader_settings" />
 
     <PreferenceScreen
+        android:fragment="org.koitharu.kotatsu.settings.TvSettingsFragment"
+        android:icon="@drawable/ic_tv"
+        android:key="tv"
+        android:summary="@string/pref_tv_summary"
+        android:title="@string/pref_tv" />
+
+    <PreferenceScreen
         android:fragment="org.koitharu.kotatsu.settings.StorageAndNetworkSettingsFragment"
         android:icon="@drawable/ic_usage"
         android:key="network"

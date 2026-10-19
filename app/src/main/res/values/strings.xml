@@ -904,4 +904,25 @@
     <string name="download_default_directory">Default directory for downloading manga</string>
     <string name="private_app_directory_warning">This directory with all data will be deleted if you uninstall the application</string>
     <string name="available_pattern">%1$s available</string>
+    <!-- TV fork -->
+    <string name="tv_autoscroll_enabled" translatable="true">Auto-scroll on (%1$d%%)</string>
+    <string name="tv_autoscroll_disabled" translatable="true">Auto-scroll off</string>
+    <string name="tv_autoscroll_speed" translatable="true">Auto-scroll speed: %1$d%%</string>
+    <string name="pref_tv" translatable="true">TV &amp; remote control</string>
+    <string name="pref_tv_summary" translatable="true">D-pad, focus and mouse pointer behavior on Android TV</string>
+    <string name="tv_mode" translatable="true">TV mode</string>
+    <string name="tv_mode_summary_pattern" translatable="true">%1$s · device detected as TV: %2$s</string>
+    <string name="tv_device_detected_yes" translatable="true">yes</string>
+    <string name="tv_device_detected_no" translatable="true">no</string>
+    <string name="tv_mode_auto" translatable="true">Auto (detect device)</string>
+    <string name="tv_mode_on" translatable="true">Always on</string>
+    <string name="tv_mode_off" translatable="true">Off</string>
+    <string name="tv_focus_highlight" translatable="true">Focus highlight</string>
+    <string name="tv_focus_highlight_summary" translatable="true">Draw a visible ring around the item selected with the D-pad</string>
+    <string name="tv_hover_focus" translatable="true">Mouse hover selects</string>
+    <string name="tv_hover_focus_summary" translatable="true">Move the D-pad focus under the mouse pointer while hovering</string>
+    <string name="tv_wheel_paging" translatable="true">Mouse wheel paging</string>
+    <string name="tv_wheel_paging_summary" translatable="true">Turn pages with the mouse wheel in the reader</string>
+    <string name="tv_autoscroll_keys" translatable="true">Remote auto-scroll keys</string>
+    <string name="tv_autoscroll_keys_summary" translatable="true">PLAY/PAUSE toggles auto-scroll, FF/REW change its speed</string>
 </resources>

@@ -82,4 +82,10 @@
 
 	<dimen name="chip_icon_corner">3dp</dimen>
 	<dimen name="read_button_min_width">92dp</dimen>
+
+	<!-- TV focus ring (TV fork) -->
+	<dimen name="tv_focus_inset">3dp</dimen>
+	<dimen name="tv_focus_corner">10dp</dimen>
+	<dimen name="tv_focus_stroke_width">3dp</dimen>
+	<dimen name="tv_focus_stroke_outer">2dp</dimen>
 </resources>

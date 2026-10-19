@@ -33,4 +33,8 @@
 	<color name="background_sakura">#FFF8F8</color>
 	<color name="background_mamimi">#FFF8F7</color>
 	<color name="background_kanade">#F3F3F3</color>
+
+	<!-- TV focus ring (TV fork) -->
+	<color name="tv_focus_ring_inner">#FF4FC3F7</color>
+	<color name="tv_focus_ring_outer">#E6000000</color>
 </resources>

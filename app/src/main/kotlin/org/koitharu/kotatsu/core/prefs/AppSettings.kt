@@ -518,6 +518,28 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
 		get() = prefs.getBoolean(KEY_READER_AUTOSCROLL_FAB, true)
 		set(value) = prefs.edit { putBoolean(KEY_READER_AUTOSCROLL_FAB, value) }
 
+	//region TV / remote control preferences (TV fork)
+	var tvModeOverride: TvModeOverride
+		get() = prefs.getEnumValue(KEY_TV_MODE, TvModeOverride.AUTO)
+		set(value) = prefs.edit { putEnumValue(KEY_TV_MODE, value) }
+
+	var isTvFocusHighlightEnabled: Boolean
+		get() = prefs.getBoolean(KEY_TV_FOCUS_HIGHLIGHT, true)
+		set(value) = prefs.edit { putBoolean(KEY_TV_FOCUS_HIGHLIGHT, value) }
+
+	var isTvHoverToFocusEnabled: Boolean
+		get() = prefs.getBoolean(KEY_TV_HOVER_FOCUS, true)
+		set(value) = prefs.edit { putBoolean(KEY_TV_HOVER_FOCUS, value) }
+
+	var isTvWheelPagingEnabled: Boolean
+		get() = prefs.getBoolean(KEY_TV_WHEEL_PAGING, true)
+		set(value) = prefs.edit { putBoolean(KEY_TV_WHEEL_PAGING, value) }
+
+	var isTvAutoscrollRemoteKeysEnabled: Boolean
+		get() = prefs.getBoolean(KEY_TV_AUTOSCROLL_KEYS, true)
+		set(value) = prefs.edit { putBoolean(KEY_TV_AUTOSCROLL_KEYS, value) }
+	//endregion
+
 	val isPagesPreloadEnabled: Boolean
 		get() {
 			if (isBackgroundNetworkRestricted()) {
@@ -771,6 +793,12 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
 		const val KEY_SSL_BYPASS = "ssl_bypass"
 		const val KEY_READER_AUTOSCROLL_SPEED = "as_speed"
 		const val KEY_READER_AUTOSCROLL_FAB = "as_fab"
+		// TV fork keys
+		const val KEY_TV_MODE = "tv_mode"
+		const val KEY_TV_FOCUS_HIGHLIGHT = "tv_focus_highlight"
+		const val KEY_TV_HOVER_FOCUS = "tv_hover_focus"
+		const val KEY_TV_WHEEL_PAGING = "tv_wheel_paging"
+		const val KEY_TV_AUTOSCROLL_KEYS = "tv_autoscroll_keys"
 		const val KEY_MIRROR_SWITCHING = "mirror_switching"
 		const val KEY_PROXY = "proxy"
 		const val KEY_PROXY_TYPE = "proxy_type_2"

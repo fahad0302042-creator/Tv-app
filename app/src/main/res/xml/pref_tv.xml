@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:title="@string/pref_tv">
+
+	<ListPreference
+		android:defaultValue="AUTO"
+		android:entries="@array/tv_mode_entries"
+		android:entryValues="@array/tv_mode_values"
+		android:key="tv_mode"
+		android:title="@string/tv_mode" />
+
+	<SwitchPreferenceCompat
+		android:defaultValue="true"
+		android:key="tv_focus_highlight"
+		android:summary="@string/tv_focus_highlight_summary"
+		android:title="@string/tv_focus_highlight" />
+
+	<SwitchPreferenceCompat
+		android:defaultValue="true"
+		android:key="tv_hover_focus"
+		android:summary="@string/tv_hover_focus_summary"
+		android:title="@string/tv_hover_focus" />
+
+	<SwitchPreferenceCompat
+		android:defaultValue="true"
+		android:key="tv_wheel_paging"
+		android:summary="@string/tv_wheel_paging_summary"
+		android:title="@string/tv_wheel_paging" />
+
+	<SwitchPreferenceCompat
+		android:defaultValue="true"
+		android:key="tv_autoscroll_keys"
+		android:summary="@string/tv_autoscroll_keys_summary"
+		android:title="@string/tv_autoscroll_keys" />
+
+</PreferenceScreen>

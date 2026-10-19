@@ -8,6 +8,7 @@ import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.prefs.ReaderMode
 import org.koitharu.kotatsu.reader.data.TapGridSettings
 import org.koitharu.kotatsu.reader.domain.TapGridArea
+import org.koitharu.kotatsu.core.ui.tv.TvController
 import org.koitharu.kotatsu.reader.ui.tapgrid.TapAction
 import kotlin.math.sign
 
@@ -15,10 +16,15 @@ class ReaderControlDelegate(
 	resources: Resources,
 	private val settings: AppSettings,
 	private val tapGridSettings: TapGridSettings,
+	private val tvController: TvController,
 	private val listener: OnInteractionListener,
 ) : View.OnClickListener {
 
 	private var minScrollDelta = resources.getDimensionPixelSize(R.dimen.reader_scroll_delta_min)
+
+	// DPAD_CENTER state machine: short press toggles the UI, long press toggles auto-scroll.
+	private var isCenterPending = false
+	private var isCenterLongHandled = false
 
 	override fun onClick(v: View) {
 		when (v.id) {
@@ -45,12 +51,17 @@ class ReaderControlDelegate(
 	}
 
 	fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+		// When the focus is inside the reader controls (toolbar, docked actions bar,
+		// auto-scroll panel) the D-pad must move the focus / activate the focused control
+		// instead of paging. Returning false lets the framework do the focus traversal.
+		if (listener.isUiControlsFocused() && isNavigationKey(keyCode)) {
+			return false
+		}
 		when (keyCode) {
 			KeyEvent.KEYCODE_NAVIGATE_NEXT,
 			KeyEvent.KEYCODE_SPACE -> switchBy(1, event, false)
 
 			KeyEvent.KEYCODE_PAGE_DOWN -> switchBy(1, event, false)
-
 
 			KeyEvent.KEYCODE_NAVIGATE_PREVIOUS -> switchBy(-1, event, false)
 			KeyEvent.KEYCODE_PAGE_UP -> switchBy(-1, event, false)
@@ -75,7 +86,7 @@ class ReaderControlDelegate(
 
 			KeyEvent.KEYCODE_DPAD_LEFT -> switchByRelative(if (settings.isReaderNavigationInverted) 1 else -1, event)
 
-			KeyEvent.KEYCODE_DPAD_CENTER -> listener.toggleUiVisibility()
+			KeyEvent.KEYCODE_DPAD_CENTER -> return onCenterKeyDown(event)
 
 			KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP,
 			KeyEvent.KEYCODE_DPAD_UP -> switchBy(if (settings.isReaderNavigationInverted) 1 else -1, event, true)
@@ -83,15 +94,99 @@ class ReaderControlDelegate(
 			KeyEvent.KEYCODE_SYSTEM_NAVIGATION_DOWN,
 			KeyEvent.KEYCODE_DPAD_DOWN -> switchBy(if (settings.isReaderNavigationInverted) -1 else 1, event, true)
 
+			//region TV remote (TV fork)
+			KeyEvent.KEYCODE_MENU,
+			KeyEvent.KEYCODE_BUTTON_Y -> listener.openMenu()
+
+			KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
+			KeyEvent.KEYCODE_MEDIA_PLAY -> if (isAutoscrollKeysEnabled()) {
+				listener.onScrollTimerClick(isLongClick = true)
+			} else {
+				return false
+			}
+
+			KeyEvent.KEYCODE_MEDIA_PAUSE -> if (isAutoscrollKeysEnabled() && listener.isAutoscrollActive()) {
+				listener.onScrollTimerClick(isLongClick = true)
+			} else {
+				return false
+			}
+
+			KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,
+			KeyEvent.KEYCODE_MEDIA_NEXT -> if (isAutoscrollKeysEnabled()) {
+				listener.onAutoscrollSpeedStep(SPEED_STEP)
+			} else {
+				return false
+			}
+
+			KeyEvent.KEYCODE_MEDIA_REWIND,
+			KeyEvent.KEYCODE_MEDIA_PREVIOUS -> if (isAutoscrollKeysEnabled()) {
+				listener.onAutoscrollSpeedStep(-SPEED_STEP)
+			} else {
+				return false
+			}
+			//endregion
+
 			else -> return false
 		}
 		return true
 	}
 
-	fun onKeyUp(keyCode: Int, @Suppress("UNUSED_PARAMETER") event: KeyEvent?): Boolean {
-		return (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP)
-			&& settings.isReaderVolumeButtonsEnabled
+	fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
+		when (keyCode) {
+			KeyEvent.KEYCODE_DPAD_CENTER -> {
+				val wasPending = isCenterPending
+				isCenterPending = false
+				if (isCenterLongHandled) {
+					isCenterLongHandled = false
+					return true
+				}
+				if (wasPending && !listener.isUiControlsFocused()) {
+					listener.toggleUiVisibility()
+					return true
+				}
+				return false
+			}
+
+			KeyEvent.KEYCODE_VOLUME_DOWN,
+			KeyEvent.KEYCODE_VOLUME_UP -> return settings.isReaderVolumeButtonsEnabled
+
+			else -> return false
+		}
 	}
+
+	private fun onCenterKeyDown(event: KeyEvent?): Boolean {
+		val repeatCount = event?.repeatCount ?: 0
+		if (listener.isUiControlsFocused()) {
+			// Let the focused control handle the press itself.
+			return false
+		}
+		if (repeatCount == 0) {
+			isCenterPending = true
+			isCenterLongHandled = false
+			return true
+		}
+		if (isCenterPending && !isCenterLongHandled) {
+			isCenterPending = false
+			isCenterLongHandled = true
+			listener.onScrollTimerClick(isLongClick = true)
+		}
+		return true
+	}
+
+	private fun isNavigationKey(keyCode: Int): Boolean = when (keyCode) {
+		KeyEvent.KEYCODE_DPAD_UP,
+		KeyEvent.KEYCODE_DPAD_DOWN,
+		KeyEvent.KEYCODE_DPAD_LEFT,
+		KeyEvent.KEYCODE_DPAD_RIGHT,
+		KeyEvent.KEYCODE_DPAD_CENTER,
+		KeyEvent.KEYCODE_ENTER,
+		KeyEvent.KEYCODE_NUMPAD_ENTER,
+		KeyEvent.KEYCODE_SPACE -> true
+
+		else -> false
+	}
+
+	private fun isAutoscrollKeysEnabled(): Boolean = tvController.isAutoscrollRemoteKeysEnabled
 
 	private fun processAction(action: TapAction) {
 		when (action) {
@@ -149,5 +244,21 @@ class ReaderControlDelegate(
 		fun toggleScreenOrientation()
 
 		fun isReaderResumed(): Boolean
+
+		/**
+		 * `true` when the D-pad focus is currently inside the reader UI (toolbar, docked
+		 * actions bar or the auto-scroll panel), so keys should control the UI instead of
+		 * the pages. (TV fork)
+		 */
+		fun isUiControlsFocused(): Boolean
+
+		fun isAutoscrollActive(): Boolean
+
+		fun onAutoscrollSpeedStep(delta: Float)
+	}
+
+	private companion object {
+
+		const val SPEED_STEP = 0.05f
 	}
 }

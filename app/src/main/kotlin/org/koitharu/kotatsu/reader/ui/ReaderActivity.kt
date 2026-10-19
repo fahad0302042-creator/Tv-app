@@ -10,6 +10,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.graphics.Insets
@@ -43,6 +44,10 @@ import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.prefs.ReaderMode
 import org.koitharu.kotatsu.core.ui.BaseFullscreenActivity
 import org.koitharu.kotatsu.core.ui.dialog.buildAlertDialog
+import org.koitharu.kotatsu.core.ui.tv.TvController
+import org.koitharu.kotatsu.core.ui.tv.TvFocus
+import org.koitharu.kotatsu.core.ui.tv.TvFocusTarget
+import org.koitharu.kotatsu.core.ui.tv.TvPointer
 import org.koitharu.kotatsu.core.ui.dialog.setCheckbox
 import org.koitharu.kotatsu.core.ui.util.MenuInvalidator
 import org.koitharu.kotatsu.core.ui.widgets.ZoomControl
@@ -78,6 +83,7 @@ class ReaderActivity :
 	IdlingDetector.Callback,
 	ZoomControl.ZoomControlListener,
 	View.OnClickListener,
+	TvFocusTarget,
 	ScrollTimerControlView.OnVisibilityChangeListener {
 
 	@Inject
@@ -95,6 +101,9 @@ class ReaderActivity :
 	@Inject
 	lateinit var screenOrientationHelper: ScreenOrientationHelper
 
+	@Inject
+	lateinit var tvController: TvController
+
 	private val idlingDetector = IdlingDetector(TimeUnit.SECONDS.toMillis(10), this)
 
 	private val viewModel: ReaderViewModel by viewModels()
@@ -109,6 +118,11 @@ class ReaderActivity :
 	private var gestureInsets: Insets = Insets.NONE
 	private lateinit var readerManager: ReaderManager
 	private val hideUiRunnable = Runnable { setUiIsVisible(false) }
+	private val hideUiBackCallback = object : OnBackPressedCallback(false) {
+		override fun handleOnBackPressed() {
+			setUiIsVisible(false)
+		}
+	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -118,7 +132,12 @@ class ReaderActivity :
 		touchHelper = TapGridDispatcher(viewBinding.root, this)
 		scrollTimer = scrollTimerFactory.create(resources, this, this)
 		pageSaveHelper = pageSaveHelperFactory.create(this)
-		controlDelegate = ReaderControlDelegate(resources, settings, tapGridSettings, this)
+		controlDelegate = ReaderControlDelegate(resources, settings, tapGridSettings, tvController, this)
+		// The reader pages are controlled by the D-pad at the activity level; do not let the
+		// TV focus layer make page views focusable.
+		TvFocus.skipSubtree(viewBinding.container)
+		onBackPressedDispatcher.addCallback(hideUiBackCallback)
+		hideUiBackCallback.isEnabled = viewBinding.appbarTop.isVisible
 		viewBinding.zoomControl.listener = this
 		viewBinding.actionsView.listener = this
 		viewBinding.buttonTimer?.setOnClickListener(this)
@@ -298,6 +317,17 @@ class ReaderActivity :
 		}
 	}
 
+	override fun dispatchGenericMotionEvent(ev: MotionEvent): Boolean {
+		if (tvController.isWheelPagingEnabled) {
+			val delta = TvPointer.verticalScrollDelta(ev)
+			if (delta != 0f) {
+				switchPageBy(if (delta > 0f) 1 else -1)
+				return true
+			}
+		}
+		return super.dispatchGenericMotionEvent(ev)
+	}
+
 	override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
 		touchHelper.dispatchTouchEvent(ev)
 		if (!viewBinding.timerControl.hasGlobalPoint(ev.rawX.toInt(), ev.rawY.toInt())) {
@@ -367,6 +397,8 @@ class ReaderActivity :
 			val isFullscreen = settings.isReaderFullscreenEnabled
 			viewBinding.appbarTop.isVisible = isUiVisible
 			viewBinding.toolbarDocked?.isVisible = isUiVisible
+			hideUiBackCallback.isEnabled = isUiVisible
+			updateTvFocusForUi(isUiVisible)
 			viewBinding.infoBar.isGone = isUiVisible || (!viewModel.isInfoBarEnabled.value)
 			viewBinding.infoBar.isTimeVisible = isFullscreen
 			updateScrollTimerButton()
@@ -441,7 +473,8 @@ class ReaderActivity :
 
 	override fun onScrollTimerClick(isLongClick: Boolean) {
 		if (isLongClick) {
-			scrollTimer.setActive(!scrollTimer.isActive.value)
+			val isActive = scrollTimer.toggleActive()
+			showAutoscrollToast(isActive)
 		} else {
 			viewBinding.timerControl.showOrHide()
 		}
@@ -543,6 +576,62 @@ class ReaderActivity :
 			setOnCancelListener { finishAfterTransition() }
 			setCancelable(true)
 		}.show()
+	}
+
+	override fun isUiControlsFocused(): Boolean {
+		return viewBinding.appbarTop.hasFocus() ||
+			viewBinding.toolbarDocked?.hasFocus() == true ||
+			viewBinding.timerControl.hasFocus()
+	}
+
+	override fun isAutoscrollActive(): Boolean = scrollTimer.isActive.value
+
+	override fun onAutoscrollSpeedStep(delta: Float) {
+		if (!scrollTimer.isActive.value) {
+			val isActive = scrollTimer.toggleActive()
+			if (!isActive) {
+				return
+			}
+		}
+		val speed = scrollTimer.adjustSpeed(delta)
+		viewBinding.toastView.showTemporary(
+			getString(R.string.tv_autoscroll_speed, (speed * 100).toInt()),
+			TOAST_DURATION,
+		)
+	}
+
+	override fun tvInitialFocusView(): View? = null
+
+	private fun showAutoscrollToast(isActive: Boolean) {
+		val message = if (isActive) {
+			getString(
+				R.string.tv_autoscroll_enabled,
+				(settings.readerAutoscrollSpeed * 100).toInt(),
+			)
+		} else {
+			getString(R.string.tv_autoscroll_disabled)
+		}
+		viewBinding.toastView.showTemporary(message, TOAST_DURATION)
+	}
+
+	/**
+	 * On a TV the reader UI is operated with the D-pad: when it appears the focus moves into
+	 * it, when it hides the focus is dropped so the D-pad pages again.
+	 */
+	private fun updateTvFocusForUi(isUiVisible: Boolean) {
+		if (!tvController.isEnabled) {
+			return
+		}
+		if (isUiVisible) {
+			val target = viewBinding.toolbarDocked ?: viewBinding.appbarTop
+			target.post {
+				if (window?.decorView?.findFocus() == null) {
+					target.requestFocus()
+				}
+			}
+		} else if (isUiControlsFocused()) {
+			currentFocus?.clearFocus()
+		}
 	}
 
 	companion object {

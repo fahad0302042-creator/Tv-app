@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  10-foot UI tuning for Android TV: bigger covers and more air between items so that the
+  focused item and its focus ring stay readable from a couch.
+-->
+<resources>
+	<dimen name="margin_normal">20dp</dimen>
+	<dimen name="screen_padding">24dp</dimen>
+	<dimen name="grid_spacing">12dp</dimen>
+	<dimen name="list_spacing">12dp</dimen>
+	<dimen name="list_spacing_normal">12dp</dimen>
+	<dimen name="preferred_grid_width">150dp</dimen>
+	<dimen name="small_grid_width">116dp</dimen>
+	<dimen name="smaller_grid_width">128dp</dimen>
+	<dimen name="explore_grid_width">150dp</dimen>
+	<dimen name="chapter_grid_width">104dp</dimen>
+	<dimen name="manga_list_details_item_height">148dp</dimen>
+	<dimen name="bookmark_item_height">148dp</dimen>
+	<dimen name="chapter_list_item_height">60dp</dimen>
+	<dimen name="recommendation_item_height">112dp</dimen>
+</resources>

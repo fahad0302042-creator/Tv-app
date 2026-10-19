@@ -16,4 +16,7 @@
 	<item name="nav_updated" type="id" />
 	<item name="nav_suggestions" type="id" />
 	<item name="nav_bookmarks" type="id" />
+	<!-- TV fork -->
+	<item name="tag_tv_focus_delegate" type="id" />
+	<item name="tag_tv_adapted" type="id" />
 </resources>
