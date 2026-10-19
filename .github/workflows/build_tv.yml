@@ -31,11 +31,35 @@ jobs:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
       - name: Build debug APK
-        run: ./gradlew --no-daemon assembleDebug
+        run: |
+          set +e
+          ./gradlew --no-daemon assembleDebug 2>&1 | tee gradle-build.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            echo "::group::Gradle failure tail"
+            tail -n 150 gradle-build.log
+            echo "::endgroup::"
+            # Surface compiler/resource errors as check-run annotations so they are
+            # visible from the Checks API without downloading the raw logs.
+            grep -E '^e: |error: |FAILURE: |Caused by: |Execution failed for task|AAPT: |what went wrong' -i gradle-build.log \
+              | head -n 40 \
+              | sed 's/%/%25/g' \
+              | while IFS= read -r line; do echo "::error::${line}"; done
+            tail -n 200 gradle-build.log >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$status"
 
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: kotatsu-tv-debug-${{ github.sha }}
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: Upload build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-build-log-${{ github.sha }}
+          path: gradle-build.log
