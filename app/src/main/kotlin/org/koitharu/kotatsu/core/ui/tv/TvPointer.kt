@@ -15,7 +15,7 @@ import android.view.View
  *  - makes the pointer useful by assigning sensible system pointer icons,
  *  - moves the D-pad focus under the mouse cursor while hovering, so the focus ring and the
  *    pointer never disagree about what will be activated on click,
- *  - provides wheel (AXIS_V_SCROLL) helpers used by the readers for paging.
+ *  - provides wheel (AXIS_VSCROLL) helpers used by the readers for paging.
  */
 object TvPointer {
 
