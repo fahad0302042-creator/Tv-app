@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Scaled for 10-foot TV viewing -->
+    <dimen name="text_size_large">24sp</dimen>
+    <dimen name="text_size_medium">20sp</dimen>
+    <dimen name="margin_large">32dp</dimen>
+    <dimen name="margin_small">16dp</dimen>
+</resources>

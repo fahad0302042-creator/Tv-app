@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="tv_mode"
+        android:title="TV Mode"
+        android:summary="Enable TV mode (mouse pointer + auto scroll + scaled UI)" />
+
+</PreferenceScreen>
