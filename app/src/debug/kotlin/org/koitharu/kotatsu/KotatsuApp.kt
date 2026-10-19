@@ -43,7 +43,11 @@ class KotatsuApp : BaseApp() {
 				detectCustomSlowCalls()
 				detectResourceMismatches()
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) detectUnbufferedIo()
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) detectExplicitGc()
+				// detectExplicitGc() is deliberately NOT enabled here: detectActivityLeaks() in
+				// the VM policy below makes the framework call System.gc() from
+				// StrictMode.decrementExpectedActivityCount() whenever the last activity is
+				// destroyed, and the explicit-GC detector reports that framework GC as a
+				// false-positive ExplicitGcViolation on the main thread.
 				penaltyLog()
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && notifier != null) {
 					penaltyListener(notifier.executor, notifier)
